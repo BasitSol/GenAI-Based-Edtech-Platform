@@ -1,0 +1,18 @@
+pymupdf>=1.24
+pdfplumber>=0.11
+PyYAML>=6.0
+chromadb>=0.5
+fastapi>=0.115
+uvicorn>=0.30
+streamlit>=1.38
+openai>=1.40
+sentence-transformers>=3.0
+pydantic>=2.8
+python-dotenv>=1.0
+pytest>=8.0
+# Phase 1 OCR: PaddleOCR is primary; Tesseract is the explicit fallback.
+# Use Python 3.12 for the widest PaddlePaddle wheel compatibility.
+paddlepaddle>=3.0
+paddleocr>=3.0
+pytesseract>=0.3
+Pillow>=10.0

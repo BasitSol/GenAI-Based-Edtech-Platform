@@ -1,0 +1,12 @@
+# Final measured local semantic configuration; keep generator settings fixed.
+extends: baseline.yaml
+embedding_provider: sentence_transformers
+embedding_model: BAAI/bge-m3
+embedding_max_length: 8192
+contextual_enrichment: metadata-v2
+reranker: BAAI/bge-reranker-base
+reranker_candidates: 24
+reranker_max_length: 512
+parent_child_expansion: true
+extractive_context_compression: true
+workflow: deterministic_first

@@ -1,0 +1,18 @@
+development_dataset: evaluation/datasets/development.jsonl
+validation_dataset: evaluation/datasets/validation.jsonl
+hidden_test_dataset: evaluation/datasets/hidden_test.jsonl
+metrics: [ingestion_coverage, readable_page_rate, ocr_success_rate, diagram_image_coverage, recall_at_5, recall_at_10, mrr, ndcg_at_10, source_routing_accuracy, exact_scheme_retrieval_accuracy, key_point_coverage, faithfulness, citation_precision, citation_coverage, official_status_accuracy, abstention_accuracy, technical_failure_rate, latency, estimated_cost]
+quality_gates:
+  page_extraction_coverage: 0.99
+  recall_at_5: 0.90
+  recall_at_10: 0.95
+  mrr: 0.75
+  source_routing_accuracy: 0.95
+  exact_scheme_retrieval_accuracy: 0.98
+  faithfulness: 0.92
+  citation_precision: 0.95
+  citation_coverage: 0.90
+  official_status_accuracy: 1.0
+  technical_failure_rate_maximum: 0.01
+  median_latency_ms_maximum: 5000
+  p95_latency_ms_maximum: 10000

@@ -1,0 +1,15 @@
+raw_data_root: "./Data"
+processed_data_root: "./data_processed"
+sources:
+  books:
+    o_level: {folder: "Books", filename_contains: ["o-level"], expected_document_type: "TEXTBOOK", level: "O_LEVEL", subject_code: "2210"}
+    a_level: {folder: "Books", filename_contains: ["a-level"], expected_document_type: "TEXTBOOK", level: "A_LEVEL", subject_code: "9618"}
+  past_papers:
+    o_level: {folder: "Past Papers/O-levels past papers", expected_document_type: "QUESTION_PAPER", level: "O_LEVEL", subject_code: "2210"}
+    a_level: {folder: "Past Papers/A-levels past papers", expected_document_type: "QUESTION_PAPER", level: "A_LEVEL", subject_code: "9618"}
+  mark_schemes:
+    o_level: {folder: "Mark Schemes/O-Levels Mark schemes", expected_document_type: "MARK_SCHEME", level: "O_LEVEL", subject_code: "2210"}
+    a_level: {folder: "Mark Schemes/A-Levels Mark schemes", expected_document_type: "MARK_SCHEME", level: "A_LEVEL", subject_code: "9618"}
+  syllabuses:
+    o_level: {folder: "Syllabus", filename_contains: ["o-level"], expected_document_type: "SYLLABUS", level: "O_LEVEL", subject_code: "2210"}
+    a_level: {folder: "Syllabus", filename_contains: ["a-level"], expected_document_type: "SYLLABUS", level: "A_LEVEL", subject_code: "9618"}

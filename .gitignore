@@ -1,0 +1,53 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Documentation policy: publish README only
+*.md
+!README.md
+
+# Python environments and generated caches
+.venv/
+.venv312/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.pytest_tmp/
+.pytest_runs/
+.coverage
+coverage.xml
+htmlcov/
+
+# Raw source material is distributed separately
+Data/
+
+# Reproducible ingestion, vector, database and model artifacts
+data_processed/
+.cache/
+models/
+*.safetensors
+*.onnx
+*.db
+*.sqlite
+
+# Evaluation outputs and private/unreviewed benchmark material
+evaluation/cache/
+evaluation/results/
+evaluation/manual_review/
+evaluation/manual_quality_gates.json
+evaluation/datasets/hidden_test.jsonl
+evaluation/datasets/phase1_benchmark.jsonl
+evaluation/datasets/*candidates*.jsonl
+
+# Temporary/runtime files
+tmp/
+*.log
+
+# Local tooling and editor state
+.agents/
+.codex/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
