@@ -32,13 +32,13 @@ models/
 *.sqlite
 
 # Evaluation outputs and private/unreviewed benchmark material
-evaluation/cache/
-evaluation/results/
-evaluation/manual_review/
-evaluation/manual_quality_gates.json
-evaluation/datasets/hidden_test.jsonl
-evaluation/datasets/phase1_benchmark.jsonl
-evaluation/datasets/*candidates*.jsonl
+**/evaluation/cache/
+**/evaluation/results/
+**/evaluation/manual_review/
+**/evaluation/manual_quality_gates.json
+**/evaluation/datasets/hidden_test.jsonl
+**/evaluation/datasets/phase1_benchmark.jsonl
+**/evaluation/datasets/*candidates*.jsonl
 
 # Temporary/runtime files
 tmp/
