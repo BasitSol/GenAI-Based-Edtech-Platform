@@ -16,56 +16,46 @@ The implementation is a clean v2 architecture. Generated corpora, manifests, emb
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    subgraph OFFLINE[Versioned offline build]
-        PDF[Source PDFs] --> DISC[Discovery + SHA-256 inventory]
-        DISC --> PARSE[PyMuPDF extraction]
-        PARSE --> QUALITY{Text quality sufficient?}
-        QUALITY -- no --> SECOND[pdfplumber recovery]
-        SECOND --> OCR{OCR required?}
-        OCR -- yes --> PADDLE[PaddleOCR]
-        PADDLE --> TESS[Tesseract fallback if needed]
-        QUALITY -- yes --> PAGES[Page records]
-        OCR -- no --> PAGES
-        TESS --> PAGES
-        SECOND --> PAGES
-        PAGES --> CHUNK[Source-aware page-local chunking]
-        CHUNK --> CONTEXT[Deterministic contextual enrichment]
-        CONTEXT --> DENSE[OpenAI embeddings + Chroma cosine index]
-        CONTEXT --> BM25[BM25 sparse index]
-        CHUNK --> META[SQLite metadata + exact-paper relationships]
-        DENSE --> PROMOTE[Atomic READY manifest promotion]
-        BM25 --> PROMOTE
-        META --> PROMOTE
-    end
+### System overview
 
-    subgraph ONLINE[Bounded LangGraph workflow]
-        USER[User + session] --> MEMORY[Relevant bounded memory]
-        MEMORY --> UNDERSTAND[Intent/category/difficulty/reference understanding]
-        UNDERSTAND --> POLICY[Adaptive retrieval policy]
-        POLICY --> EXACT[Exact metadata retrieval]
-        POLICY --> SEM[Dense semantic retrieval]
-        POLICY --> LEX[BM25 lexical retrieval]
-        EXACT --> RRF[Reciprocal-rank fusion]
-        SEM --> RRF
-        LEX --> RRF
-        RRF --> RERANK[BGE cross-encoder reranking]
-        RERANK --> SUFFICIENT{Context sufficient?}
-        SUFFICIENT -- no, first time --> REWRITE[Correct query once]
-        REWRITE --> POLICY
-        SUFFICIENT -- no, after retry --> ABSTAIN[Grounded abstention]
-        SUFFICIENT -- yes --> PARENT[Parent expansion]
-        PARENT --> COMPRESS[Extractive context compression]
-        COMPRESS --> SCHEME{Exact mark scheme?}
-        SCHEME -- yes --> OFFICIAL[Deterministic official answer]
-        SCHEME -- no --> GENERATE[Schema-constrained generation]
-        OFFICIAL --> VALIDATE[Citation identity + response contract validation]
-        GENERATE --> VALIDATE
-        VALIDATE --> RESULT[Clean answer + separate Sources panel]
-        RESULT --> TRACE[Local telemetry + optional LangSmith]
-    end
-```
+![Phase 1 educational RAG architecture](phase1-architecture.svg)
+<!--
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 900" width="100%" role="img" aria-label="Phase 1 educational RAG architecture">
+<style>text{font-family:Arial,sans-serif;fill:#162536}.title{font-size:28px;font-weight:700;fill:white}.lane{font-size:20px;font-weight:700}.box{font-size:16px;font-weight:600}.small{font-size:13px;fill:#425466}.node{fill:#fff;stroke:#6b8bab;stroke-width:2}.arrow{stroke:#526174;stroke-width:3;fill:none;marker-end:url(#a)}</style>
+<defs><marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#526174"/></marker></defs>
+<rect width="1500" height="900" fill="#f7f9fc"/>
+<rect x="25" y="20" width="1450" height="65" rx="12" fill="#173b5c"/><text x="55" y="61" class="title">Computer Science Educational RAG · Phase 1</text>
+<rect x="35" y="110" width="1430" height="220" rx="14" fill="#e7f3ff" stroke="#94bee1"/><text x="60" y="145" class="lane">1 · OFFLINE KNOWLEDGE BUILD</text>
+<g class="node"><rect x="60" y="175" width="175" height="75" rx="10"/><rect x="275" y="175" width="175" height="75" rx="10"/><rect x="490" y="175" width="175" height="75" rx="10"/><rect x="705" y="175" width="175" height="75" rx="10"/><rect x="920" y="175" width="175" height="75" rx="10"/><rect x="1135" y="175" width="270" height="75" rx="10" fill="#d4efd5"/></g>
+<text x="147" y="208" text-anchor="middle" class="box">Data/ PDFs</text><text x="147" y="230" text-anchor="middle" class="small">books · papers · schemes</text>
+<text x="362" y="208" text-anchor="middle" class="box">Extract + OCR</text><text x="362" y="230" text-anchor="middle" class="small">PyMuPDF · PaddleOCR</text>
+<text x="577" y="208" text-anchor="middle" class="box">Metadata</text><text x="577" y="230" text-anchor="middle" class="small">level · year · source</text>
+<text x="792" y="208" text-anchor="middle" class="box">Educational chunks</text><text x="792" y="230" text-anchor="middle" class="small">parent/child + enrichment</text>
+<text x="1007" y="208" text-anchor="middle" class="box">Indexes</text><text x="1007" y="230" text-anchor="middle" class="small">Chroma · BM25 · SQLite</text>
+<text x="1270" y="208" text-anchor="middle" class="box">READY manifest</text><text x="1270" y="230" text-anchor="middle" class="small">immutable build identity</text>
+<path d="M235 212H270 M450 212H485 M665 212H700 M880 212H915 M1095 212H1130" class="arrow"/>
+<rect x="35" y="360" width="1430" height="300" rx="14" fill="#ecf9e8" stroke="#9bc88e"/><text x="60" y="395" class="lane">2 · ONLINE LANGGRAPH QUERY WORKFLOW</text>
+<g class="node"><rect x="60" y="430" width="175" height="75" rx="10"/><rect x="275" y="430" width="175" height="75" rx="10"/><rect x="490" y="430" width="175" height="75" rx="10"/><rect x="705" y="430" width="175" height="75" rx="10"/><rect x="920" y="430" width="175" height="75" rx="10"/><rect x="1135" y="430" width="270" height="75" rx="10" fill="#d4efd5"/></g>
+<text x="147" y="463" text-anchor="middle" class="box">Question + memory</text><text x="147" y="485" text-anchor="middle" class="small">session / follow-up</text>
+<text x="362" y="463" text-anchor="middle" class="box">Understand query</text><text x="362" y="485" text-anchor="middle" class="small">intent · category · level</text>
+<text x="577" y="463" text-anchor="middle" class="box">Hybrid retrieve</text><text x="577" y="485" text-anchor="middle" class="small">exact + dense + BM25</text>
+<text x="792" y="463" text-anchor="middle" class="box">BGE rerank</text><text x="792" y="485" text-anchor="middle" class="small">cross-encoder evidence</text>
+<text x="1007" y="463" text-anchor="middle" class="box">Sufficiency check</text><text x="1007" y="485" text-anchor="middle" class="small">rewrite once / abstain</text>
+<text x="1270" y="463" text-anchor="middle" class="box">Context → answer</text><text x="1270" y="485" text-anchor="middle" class="small">compress + source authority</text>
+<path d="M235 467H270 M450 467H485 M665 467H700 M880 467H915 M1095 467H1130" class="arrow"/>
+<rect x="440" y="545" width="620" height="70" rx="10" class="node"/><text x="750" y="575" text-anchor="middle" class="box">Exact mark scheme → deterministic official answer</text><text x="750" y="597" text-anchor="middle" class="small">Otherwise → GPT-4.1-mini grounded generation</text><path d="M1270 505V540H1065" class="arrow"/>
+<rect x="35" y="690" width="1430" height="170" rx="14" fill="#fff4dc" stroke="#dfbd70"/><text x="60" y="725" class="lane">3 · VALIDATION, OBSERVABILITY, AND EVALUATION</text>
+<g class="node"><rect x="60" y="755" width="220" height="65" rx="10"/><rect x="330" y="755" width="220" height="65" rx="10"/><rect x="600" y="755" width="220" height="65" rx="10"/><rect x="870" y="755" width="220" height="65" rx="10"/><rect x="1140" y="755" width="265" height="65" rx="10" fill="#ffe2a8"/></g>
+<text x="170" y="783" text-anchor="middle" class="box">Grounding + citations</text><text x="170" y="803" text-anchor="middle" class="small">response contract</text>
+<text x="440" y="783" text-anchor="middle" class="box">Streamlit / FastAPI</text><text x="440" y="803" text-anchor="middle" class="small">student response</text>
+<text x="710" y="783" text-anchor="middle" class="box">live_answers.xlsx</text><text x="710" y="803" text-anchor="middle" class="small">question-level log</text>
+<text x="980" y="783" text-anchor="middle" class="box">Benchmark + RAGAS</text><text x="980" y="803" text-anchor="middle" class="small">per-question metrics</text>
+<text x="1272" y="783" text-anchor="middle" class="box">Excel report + telemetry</text><text x="1272" y="803" text-anchor="middle" class="small">aggregate + trace</text>
+<path d="M280 787H325 M550 787H595 M820 787H865 M1090 787H1135" class="arrow"/>
+</svg>
+-->
+
+The diagram is stored beside this README and rendered as a linked SVG image so GitHub displays it correctly.
 
 ### Why this design
 
