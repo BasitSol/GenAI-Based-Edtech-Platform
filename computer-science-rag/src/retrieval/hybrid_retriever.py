@@ -1,110 +1,125 @@
+"""Adaptive hybrid retrieval over one validated immutable build."""
 from __future__ import annotations
+
+import json
+import os
+import time
 from pathlib import Path
-from src.core import ROOT
+
+from src.core import current_build_path
 from src.indexing.bm25_index import BM25Index
 from src.indexing.chroma_index import ChromaIndex
 from src.indexing.metadata_store import MetadataStore
-from .authority_controller import filter_and_sort
+from .adaptive_policy import plan_for, query_variants, type_priority
 from .query_classifier import classify
-from src.core import tokens
 
-EXAM_QUERY_STOP={'answer','question','state','what','meant','define','describe','explain','give','identify','write','complete','calculate','show','working','marks','mark','page'}
 
-def _focus_exam_query(text:str)->str:
-    focused=[term for term in tokens(text) if term not in EXAM_QUERY_STOP and not term.isdigit()]
-    return ' '.join(focused) or text
+RRF_CONSTANT = 60
+
+
+def _rrf(rankings: list[list[dict]]) -> dict[str, float]:
+    scores: dict[str, float] = {}
+    for ranking in rankings:
+        for rank, item in enumerate(ranking, 1):
+            scores[item["chunk_id"]] = scores.get(item["chunk_id"], 0.0) + 1.0 / (RRF_CONSTANT + rank)
+    return scores
+
+
 class HybridRetriever:
-    def __init__(self,processed=ROOT/'data_processed'):
-        self.bm25=BM25Index.load(processed/'indexes'/'bm25'/'index.json'); self.by_id={c['chunk_id']:c for c in self.bm25.chunks}; self.chroma=ChromaIndex(processed/'indexes'/'chroma'); self.store=MetadataStore(processed/'databases'/'metadata.sqlite')
-        self.patterns=[item for item in self.bm25.chunks if item.get('document_type')=='MARKING_PATTERN']
-        self.pattern_bm25=BM25Index(self.patterns)
-    def retrieve(self,query,level=None,exam_year=None,result_limit=8):
-        route=classify(query,level,exam_year); metadata={k:route.get(k) for k in ('level','year','session','component','question_number') if route.get(k) is not None}
-        semantic_query=query
-        paper_identity_complete=all(route.get(key) is not None for key in ('subject_code','year','session','component'))
-        exact=self.store.exact_chunks(**metadata) if paper_identity_complete else []
-        if route['intent']=='EXAMINER_FEEDBACK' and route.get('question_number'):
-            exact=self.store.exact_chunks(level=route.get('level'),question_number=route['question_number'])
-        # Parsing a subquestion is best-effort; retain paper-level evidence when
-        # the PDF layout prevented a subquestion boundary from being extracted.
-        if not exact and metadata.get('question_number'):
-            exact=self.store.exact_chunks(**{k:v for k,v in metadata.items() if k!='question_number'})
-        # Fetch a wider candidate set before level filtering; otherwise results
-        # from the other qualification can crowd out the requested curriculum.
-        bm=self.bm25.search(query,200); dense_ids=self.chroma.search(query,200)['ids'][0]; dense=[self.by_id[x] for x in dense_ids if x in self.by_id]
-        if route.get('level'):
-            bm=[x for x in bm if x.get('level')==route['level']]
-            dense=[x for x in dense if x.get('level')==route['level']]
-        if paper_identity_complete:
-            identity=('subject_code','year','session','component')
-            bm=[x for x in bm if all(str(x.get(key))==str(route.get(key)) for key in identity)]
-            dense=[x for x in dense if all(str(x.get(key))==str(route.get(key)) for key in identity)]
-            if route.get('question_number'):
-                question=route['question_number']
-                bm=[x for x in bm if x.get('question_number') == question or str(x.get('question_number','')).startswith(f'{question}(')]
-                dense=[x for x in dense if x.get('question_number') == question or str(x.get('question_number','')).startswith(f'{question}(')]
-        dense_bm25_overlap_at_10=len({item['chunk_id'] for item in dense[:10]} & {item['chunk_id'] for item in bm[:10]})/10
-        broad_candidates=dense+bm
-        bm=bm[:30]; dense=dense[:30]
-        # Exact evidence leads. The remaining candidates use reciprocal-rank fusion.
-        scores={}
-        for ranking in (dense,bm):
-            for rank,chunk in enumerate(ranking,1): scores[chunk['chunk_id']]=scores.get(chunk['chunk_id'],0)+1/(60+rank)
-        fused=list(exact)
-        seen={x['chunk_id'] for x in fused}
-        for chunk_id in sorted(scores,key=scores.get,reverse=True):
-            if chunk_id not in seen: fused.append(self.by_id[chunk_id]); seen.add(chunk_id)
-        exact_scheme=paper_identity_complete and any(c['document_type']=='MARK_SCHEME' for c in exact)
-        # When a referenced paper has no matching mark scheme, the paper text is
-        # the question, not evidence for an answer. Retrieve curriculum support
-        # using the extracted question text and keep the QP chunk for identity.
-        # This is deliberately separate from the paper-identity-filtered search.
-        if paper_identity_complete and route['intent']=='EXAM_ANSWER' and not exact_scheme:
-            question_chunks=[item for item in exact if item.get('document_type')=='QUESTION_PAPER']
-            support_query=_focus_exam_query(' '.join(item.get('text','') for item in question_chunks) or query)
-            semantic_query=support_query
-            support_bm=self.bm25.search(support_query,120)
-            support_dense_ids=self.chroma.search(support_query,120)['ids'][0]
-            support_dense=[self.by_id[item] for item in support_dense_ids if item in self.by_id]
-            support_types={'TEXTBOOK','SYLLABUS','MARKING_PATTERN'}
-            curriculum_scores={}; patterns=[]; support_seen=set()
-            for ranking in (support_bm,support_dense):
-                for rank,candidate in enumerate(ranking,1):
-                    if candidate.get('document_type') not in support_types: continue
-                    if route.get('level') and candidate.get('level')!=route['level']: continue
-                    if candidate.get('document_type')=='MARKING_PATTERN':
-                        if candidate['chunk_id'] not in support_seen: patterns.append(candidate); support_seen.add(candidate['chunk_id'])
-                    else:
-                        curriculum_scores[candidate['chunk_id']]=curriculum_scores.get(candidate['chunk_id'],0)+1/(60+rank)
-            curriculum=[self.by_id[item] for item in sorted(curriculum_scores,key=curriculum_scores.get,reverse=True)]
-            pattern_ranked=self.pattern_bm25.search(support_query,40)
-            family=str(route.get('component') or '')[:1]
-            pattern_fallback=[item for item in self.patterns if (not route.get('level') or item.get('level')==route['level']) and (not family or str(item.get('component') or '').startswith(family))]
-            for candidate in pattern_ranked+pattern_fallback:
-                if route.get('level') and candidate.get('level')!=route['level']: continue
-                if candidate['chunk_id'] in support_seen: continue
-                patterns.append(candidate); support_seen.add(candidate['chunk_id'])
-            # Curriculum supplies factual evidence. Patterns supply assessment
-            # structure only and are kept as a distinct, lower-authority group.
-            fused.extend(curriculum[:20]); fused.extend(patterns[:8])
-        allowed=filter_and_sort(fused,route['intent'],exact_scheme)
-        allowed_ids={item['chunk_id'] for item in allowed}
-        for item in filter_and_sort(broad_candidates,route['intent'],exact_scheme):
-            if item['chunk_id'] not in allowed_ids:
-                allowed.append(item); allowed_ids.add(item['chunk_id'])
-        results=allowed[:result_limit]
-        if route['intent']=='EXAM_ANSWER' and not exact_scheme:
-            for required_types in ({'QUESTION_PAPER'},{'TEXTBOOK','SYLLABUS'},{'MARKING_PATTERN'}):
-                if any(item['document_type'] in required_types for item in results): continue
-                candidate=next((item for item in allowed if item['document_type'] in required_types),None)
-                if candidate:
-                    if len(results)>=result_limit: results[-1]=candidate
-                    else: results.append(candidate)
-        if route['intent'] in {'DEFINITION','CONCEPT_EXPLANATION','COMPARISON'}:
-            for document_type in ('TEXTBOOK','SYLLABUS'):
-                if any(item['document_type']==document_type for item in results): continue
-                candidate=next((item for item in allowed if item['document_type']==document_type),None)
-                if candidate:
-                    if len(results)>=result_limit: results[-1]=candidate
-                    else: results.append(candidate)
-        return {'route':route,'chunks':results,'semantic_query':semantic_query,'exact_mark_scheme_available':exact_scheme,'retrieval_debug':{'metadata_hits':len(exact),'dense_hits':len(dense),'bm25_hits':len(bm),'dense_bm25_overlap_at_10':round(dense_bm25_overlap_at_10,3),'dense_index_error':self.chroma.last_error,'semantic_query':semantic_query}}
+    def __init__(self, build: Path | None = None):
+        self.build = build or current_build_path()
+        self.manifest = json.loads((self.build / "manifest.json").read_text(encoding="utf-8"))
+        self.bm25 = BM25Index.load(self.build / "indexes" / "bm25.json")
+        self.by_id = {item["chunk_id"]: item for item in self.bm25.chunks}
+        self.metadata = MetadataStore(self.build / "indexes" / "metadata.sqlite")
+        self.dense = ChromaIndex(self.build / "indexes" / "chroma")
+        if self.dense.embedder.model != self.manifest.get("embedding_model"):
+            raise RuntimeError(
+                f"Active index uses {self.manifest.get('embedding_model')}, but runtime requests {self.dense.embedder.model}. "
+                "Rebuild indexes or restore the matching EMBEDDING_MODEL."
+            )
+
+    def _exact(self, route: dict) -> list[dict]:
+        required = ("subject_code", "year", "session", "component")
+        if not all(route.get(key) is not None for key in required):
+            return []
+        return self.metadata.exact_paper_chunks(
+            subject_code=route["subject_code"], year=int(route["year"]),
+            session=route["session"], component=str(route["component"]),
+            question_number=route.get("question_number"),
+        )
+
+    def retrieve(self, query: str, level: str | None = None, exam_year: int | None = None, result_limit: int = 24) -> dict:
+        started = time.perf_counter()
+        usage_before = (
+            self.dense.embedder.usage.requests, self.dense.embedder.usage.input_tokens,
+            self.dense.embedder.usage.cache_hits, self.dense.embedder.usage.cache_misses,
+        )
+        route = classify(query, level, exam_year)
+        plan = plan_for(route)
+        variants = query_variants(query, route, plan)
+        filters = {"level": route.get("level")}
+        sparse_rankings: list[list[dict]] = []
+        dense_rankings: list[list[dict]] = []
+        for variant in variants:
+            sparse_rankings.append(self.bm25.search(variant, plan.sparse_k, filters))
+            dense_hits = self.dense.search(variant, plan.dense_k, filters)
+            dense_rankings.append([
+                {**self.by_id[hit["chunk_id"]], **hit}
+                for hit in dense_hits if hit["chunk_id"] in self.by_id
+            ])
+
+        exact = self._exact(route)
+        exact_scheme = any(item["document_type"] == "MARK_SCHEME" for item in exact)
+        scores = _rrf(sparse_rankings + dense_rankings)
+        candidates = []
+        seen = set()
+        # Exact paper identity is deterministic and always precedes semantic
+        # support, but only a matching scheme is factual answer authority.
+        for item in sorted(exact, key=lambda chunk: (chunk["document_type"] != "MARK_SCHEME", chunk["page_start"])):
+            if item["chunk_id"] not in seen:
+                candidates.append({**item, "rrf_score": 1.0, "retrieval_route": "exact_metadata"})
+                seen.add(item["chunk_id"])
+        for chunk_id in sorted(scores, key=lambda value: scores[value] + type_priority(self.by_id[value], plan) * 1e-6, reverse=True):
+            if chunk_id in seen:
+                continue
+            item = self.by_id[chunk_id]
+            # Source authority is enforced before reranking.  Generic theory
+            # cannot be answered from unrelated assessment material merely
+            # because it shares vocabulary with the question.
+            if item.get("document_type") not in plan.preferred_types:
+                continue
+            relationship = ("ASSESSMENT_PATTERN" if item.get("document_type") == "MARK_SCHEME"
+                            else "QUESTION_IDENTITY" if item.get("document_type") == "QUESTION_PAPER"
+                            else "CURRICULUM_EVIDENCE")
+            candidates.append({**item, "relationship": relationship,
+                               "rrf_score": scores[chunk_id], "retrieval_route": "hybrid_rrf"})
+            seen.add(chunk_id)
+            if len(candidates) >= result_limit:
+                break
+
+        usage_after = (
+            self.dense.embedder.usage.requests, self.dense.embedder.usage.input_tokens,
+            self.dense.embedder.usage.cache_hits, self.dense.embedder.usage.cache_misses,
+        )
+        request_delta, token_delta, hit_delta, miss_delta = [after - before for before, after in zip(usage_before, usage_after)]
+        embedding_cost = token_delta * float(os.getenv("EMBEDDING_INPUT_PRICE_PER_MILLION", "0.02")) / 1_000_000
+        return {
+            "route": route,
+            "chunks": candidates,
+            "exact_mark_scheme_available": exact_scheme,
+            "retrieval_debug": {
+                "build_id": self.manifest["build_id"],
+                "index_identity": self.manifest["index_identity"],
+                "query_variants": variants,
+                "metadata_filters": {key: value for key, value in filters.items() if value is not None},
+                "exact_hits": len(exact),
+                "sparse_hits": [len(items) for items in sparse_rankings],
+                "dense_hits": [len(items) for items in dense_rankings],
+                "embedding_requests": request_delta, "embedding_input_tokens": token_delta,
+                "embedding_cache_hits": hit_delta, "embedding_cache_misses": miss_delta,
+                "embedding_cost": round(embedding_cost, 8),
+                "retrieval_plan": plan.to_dict(),
+                "latency_ms": round((time.perf_counter() - started) * 1000, 2),
+            },
+        }

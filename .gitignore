@@ -35,9 +35,11 @@ models/
 **/evaluation/cache/
 **/evaluation/results/
 **/evaluation/manual_review/
+**/evaluation/review_packets/
 **/evaluation/manual_quality_gates.json
 **/evaluation/datasets/hidden_test.jsonl
 **/evaluation/datasets/phase1_benchmark.jsonl
+**/evaluation/datasets/*.jsonl
 **/evaluation/datasets/*candidates*.jsonl
 
 # Temporary/runtime files

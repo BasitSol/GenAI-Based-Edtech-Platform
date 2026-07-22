@@ -1,18 +1,28 @@
-development_dataset: evaluation/datasets/development.jsonl
-validation_dataset: evaluation/datasets/validation.jsonl
-hidden_test_dataset: evaluation/datasets/hidden_test.jsonl
-metrics: [ingestion_coverage, readable_page_rate, ocr_success_rate, diagram_image_coverage, recall_at_5, recall_at_10, mrr, ndcg_at_10, source_routing_accuracy, exact_scheme_retrieval_accuracy, key_point_coverage, faithfulness, citation_precision, citation_coverage, official_status_accuracy, abstention_accuracy, technical_failure_rate, latency, estimated_cost]
+dataset: evaluation/datasets/enterprise_benchmark.jsonl
+minimum_measurable_records: 100
+retrieval_k: [5, 10]
+semantic_metrics_provider: ragas
+semantic_metrics_opt_in: true
 quality_gates:
   page_extraction_coverage: 0.99
+  retrieval_evaluation_coverage: 1.0
+  answer_evaluation_coverage: 1.0
   recall_at_5: 0.90
   recall_at_10: 0.95
   mrr: 0.75
-  source_routing_accuracy: 0.95
+  ndcg_at_10: 0.85
   exact_scheme_retrieval_accuracy: 0.98
-  faithfulness: 0.92
-  citation_precision: 0.95
+  citation_identity_accuracy: 1.0
   citation_coverage: 0.90
-  official_status_accuracy: 1.0
+  ragas_context_precision: 0.85
+  ragas_context_recall: 0.90
+  ragas_faithfulness: 0.92
+  ragas_answer_relevancy: 0.85
+  ragas_answer_correctness: 0.85
+  ragas_noise_sensitivity_maximum: 0.15
   technical_failure_rate_maximum: 0.01
   median_latency_ms_maximum: 5000
   p95_latency_ms_maximum: 10000
+  metadata_accuracy: 0.98
+  question_boundary_accuracy: 0.97
+  ocr_text_accuracy: 0.95
