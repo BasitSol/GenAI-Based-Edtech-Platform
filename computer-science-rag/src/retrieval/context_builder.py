@@ -5,6 +5,7 @@ import os
 import re
 
 from src.core import tokens
+from src.observability.tracing import traced
 
 
 PRESERVE_FULL_TYPES = {"MARK_SCHEME", "QUESTION_PAPER", "MARKING_PATTERN"}
@@ -65,6 +66,7 @@ def extract_relevant_text(query: str, chunk: dict, maximum_chars: int = 2400) ->
     return compressed or text[:maximum_chars], len(compressed or text[:maximum_chars]) < len(text)
 
 
+@traced("extractive_context_compression", run_type="tool")
 def build_context(chunks: list[dict], query: str = "", maximum_chunks: int = 6, maximum_chars: int = 12000, maximum_chars_per_chunk: int = 2400) -> list[dict]:
     result = []
     chars = 0
