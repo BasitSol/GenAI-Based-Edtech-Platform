@@ -1,163 +1,109 @@
-"""Embedding providers used by the Chroma dense-retrieval index."""
+"""Explicit embedding providers with reproducible model identities."""
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 import os
-import gc
-from functools import lru_cache
-from typing import Protocol
+import sqlite3
+from dataclasses import dataclass
 
-from src.core import tokens
-
-
-def available_memory_mb() -> int | None:
-    try:
-        import psutil
-        return int(psutil.virtual_memory().available / (1024 * 1024))
-    except Exception:
-        return None
+from src.core import PROCESSED_ROOT, tokens
 
 
-def require_available_memory(model_label: str, minimum_mb: int) -> None:
-    available = available_memory_mb()
-    if available is not None and available < minimum_mb:
-        raise RuntimeError(
-            f"{model_label} requires approximately {minimum_mb} MB of available RAM in full-precision CPU mode; "
-            f"only {available} MB is currently available. Close browsers, IDEs, Streamlit and other memory-heavy "
-            "applications, then rerun the command. The model and index have not been downgraded."
-        )
-
-
-def release_local_embedding_model() -> None:
-    """Release full-precision BGE weights before the full-precision reranker loads."""
-    _load_sentence_transformer.cache_clear()
-    gc.collect()
-
-
-class EmbeddingService(Protocol):
-    provider: str
-    model: str
-    def embed_many(self, texts: list[str]) -> list[list[float]]: ...
-    def embed(self, text: str) -> list[float]: ...
+@dataclass
+class EmbeddingUsage:
+    requests: int = 0
+    input_tokens: int = 0
+    cache_hits: int = 0
+    cache_misses: int = 0
 
 
 class HashEmbeddingService:
-    """Offline-only fallback for tests and source inspection; not a quality RAG embedding."""
-    provider = "local_hash_fallback"
+    """Deterministic test double; prohibited for production index manifests."""
+    provider = "test"
     model = "local-hash-baseline"
     dimensions = 384
+    usage = EmbeddingUsage()
 
-    def embed(self, text: str) -> list[float]:
-        vector = [0.0] * self.dimensions
-        for token in tokens(text):
-            value = int(hashlib.sha256(token.encode()).hexdigest()[:8], 16)
-            vector[value % self.dimensions] += 1 if value & 1 else -1
-        size = math.sqrt(sum(item * item for item in vector)) or 1
-        return [item / size for item in vector]
+    @property
+    def identity(self) -> str:
+        return f"{self.provider}:{self.model}:{self.dimensions}"
 
     def embed_many(self, texts: list[str]) -> list[list[float]]:
-        return [self.embed(text) for text in texts]
+        vectors = []
+        for text in texts:
+            vector = [0.0] * self.dimensions
+            for token in tokens(text):
+                value = int(hashlib.sha256(token.encode()).hexdigest()[:8], 16)
+                vector[value % self.dimensions] += 1.0 if value & 1 else -1.0
+            norm = math.sqrt(sum(value * value for value in vector)) or 1.0
+            vectors.append([value / norm for value in vector])
+        return vectors
 
 
 class OpenAIEmbeddingService:
     provider = "openai"
 
-    def __init__(self, model: str | None = None):
+    def __init__(self, model: str):
+        if not os.getenv("OPENAI_API_KEY"):
+            raise RuntimeError(f"OPENAI_API_KEY is required to build/query {model} embeddings.")
         from openai import OpenAI
-        self.model = model or os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
-        self.client = OpenAI()
-
-    def embed_many(self, texts: list[str]) -> list[list[float]]:
-        if not texts:
-            return []
-        response = self.client.embeddings.create(model=self.model, input=texts, encoding_format="float")
-        return [item.embedding for item in sorted(response.data, key=lambda item: item.index)]
-
-    def embed(self, text: str) -> list[float]:
-        return self.embed_many([text])[0]
-
-
-@lru_cache(maxsize=2)
-def _load_sentence_transformer(model: str, device: str | None, max_length: int):
-    """Share heavyweight encoders across indexes and application requests."""
-    require_available_memory(model, int(os.getenv("EMBEDDING_MIN_AVAILABLE_MB", "2800")))
-    try:
-        from sentence_transformers import SentenceTransformer
-    except ImportError as exc:
-        raise RuntimeError(
-            "sentence-transformers is required for local BGE embeddings. "
-            "Install requirements.txt before building the index."
-        ) from exc
-    encoder = SentenceTransformer(model, device=device)
-    encoder.max_seq_length = max_length
-    return encoder
-
-
-class SentenceTransformerEmbeddingService:
-    """Local normalized dense embeddings, used for BAAI/BGE models."""
-    provider = "sentence_transformers"
-
-    def __init__(self, model: str = "BAAI/bge-m3"):
         self.model = model
-        # BGE-M3 is a long-context embedding model. SentenceTransformers pads to
-        # the longest item in each batch, not this ceiling, so retaining the
-        # native 8192-token capacity does not force every short chunk to 8K.
-        self.max_length = max(64, int(os.getenv("EMBEDDING_MAX_LENGTH", "8192")))
+        self.client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+        self.usage = EmbeddingUsage()
+        self.cache_path = PROCESSED_ROOT / "runtime" / "embedding_cache.sqlite"
+        self.cache_path.parent.mkdir(parents=True, exist_ok=True)
+        with sqlite3.connect(self.cache_path) as connection:
+            connection.execute("CREATE TABLE IF NOT EXISTS embeddings(cache_key TEXT PRIMARY KEY, model TEXT NOT NULL, vector TEXT NOT NULL)")
 
     @property
-    def cache_identity(self) -> str:
-        return f"{self.provider}:{self.model}:max_length={self.max_length}:normalized=true"
-
-    def _load(self):
-        # Keep BGE-M3's configured long-context capacity. Actual compute follows
-        # the longest input in a batch because padding is dynamic.
-        return _load_sentence_transformer(self.model, os.getenv("EMBEDDING_DEVICE") or None, self.max_length)
+    def identity(self) -> str:
+        return f"{self.provider}:{self.model}"
 
     def embed_many(self, texts: list[str]) -> list[list[float]]:
         if not texts:
             return []
-        batch_size = max(1, int(os.getenv("EMBEDDING_BATCH_SIZE", "8")))
-        show_progress = len(texts) >= 16 and os.getenv("EMBEDDING_PROGRESS", "true").lower() in {"1", "true", "yes", "on"}
-        vectors = self._load().encode(
-            texts,
-            batch_size=batch_size,
-            normalize_embeddings=True,
-            convert_to_numpy=True,
-            show_progress_bar=show_progress,
-        )
-        return vectors.tolist()
+        keys = [hashlib.sha256(f"{self.model}\0{text}".encode("utf-8")).hexdigest() for text in texts]
+        unique = list(dict.fromkeys(keys))
+        cached: dict[str, list[float]] = {}
+        with sqlite3.connect(self.cache_path) as connection:
+            for offset in range(0, len(unique), 800):
+                batch = unique[offset:offset + 800]
+                placeholders = ",".join("?" for _ in batch)
+                cached.update({key: json.loads(vector) for key, vector in connection.execute(
+                    f"SELECT cache_key,vector FROM embeddings WHERE cache_key IN ({placeholders})", batch
+                )})
+        self.usage.cache_hits += sum(key in cached for key in keys)
+        missing_keys = [key for key in unique if key not in cached]
+        if missing_keys:
+            text_by_key = dict(zip(keys, texts))
+            response = self.client.embeddings.create(
+                model=self.model, input=[text_by_key[key] for key in missing_keys], encoding_format="float"
+            )
+            usage = getattr(response, "usage", None)
+            self.usage.requests += 1
+            self.usage.cache_misses += len(missing_keys)
+            self.usage.input_tokens += int(getattr(usage, "prompt_tokens", 0) or getattr(usage, "total_tokens", 0) or 0)
+            vectors = [item.embedding for item in sorted(response.data, key=lambda item: item.index)]
+            if len(vectors) != len(missing_keys):
+                raise RuntimeError("Embedding provider returned an unexpected vector count")
+            with sqlite3.connect(self.cache_path) as connection:
+                connection.executemany("INSERT OR REPLACE INTO embeddings VALUES (?,?,?)", [
+                    (key, self.model, json.dumps(vector)) for key, vector in zip(missing_keys, vectors)
+                ])
+            cached.update(dict(zip(missing_keys, vectors)))
+        return [cached[key] for key in keys]
 
-    def embed(self, text: str) -> list[float]:
-        return self.embed_many([text])[0]
 
-
-def create_embedding_service() -> EmbeddingService:
-    """Select the configured model without silently changing vector spaces."""
-    model = os.getenv("EMBEDDING_MODEL", "BAAI/bge-m3")
+def create_embedding_service(*, allow_test_provider: bool = False):
+    model = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
     if model == "local-hash-baseline":
+        if not allow_test_provider:
+            raise RuntimeError("local-hash-baseline is test-only and cannot build a production index.")
         return HashEmbeddingService()
-    provider = os.getenv("EMBEDDING_PROVIDER", "auto").lower()
-    is_openai_model = model.lower().startswith("text-embedding-")
-    if model.lower().startswith("baai/bge") or (provider in {"sentence_transformers", "local", "bge"} and not is_openai_model):
-        return SentenceTransformerEmbeddingService(model)
-    if os.getenv("OPENAI_API_KEY"):
-        return OpenAIEmbeddingService(model)
-    return UnavailableOpenAIEmbeddingService(model)
-
-
-class UnavailableOpenAIEmbeddingService:
-    """Preserve OpenAI cache identity while making missing credentials explicit."""
-    provider = "openai"
-
-    def __init__(self, model: str):
-        self.model=model
-
-    def embed_many(self, texts: list[str]) -> list[list[float]]:
+    if not model.startswith("text-embedding-"):
         raise RuntimeError(
-            f"OPENAI_API_KEY is required for uncached {self.model} embeddings. "
-            "Set the key or use EMBEDDING_MODEL=local-hash-baseline only for tests."
+            f"Unsupported active embedding model {model!r}. This low-memory build requires an explicit OpenAI embedding model."
         )
-
-    def embed(self, text: str) -> list[float]:
-        return self.embed_many([text])[0]
+    return OpenAIEmbeddingService(model)
