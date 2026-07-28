@@ -10,6 +10,8 @@
 # Python environments and generated caches
 .venv/
 .venv312/
+node_modules/
+**/dist/
 __pycache__/
 *.py[cod]
 .pytest_cache/

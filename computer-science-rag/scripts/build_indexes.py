@@ -10,10 +10,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.core import PROCESSED_ROOT, load_runtime_environment, pending_build_path, read_jsonl, stable_hash, write_json
-from src.indexing.bm25_index import BM25Index
-from src.indexing.chroma_index import ChromaIndex
-from src.indexing.metadata_store import MetadataStore
+from backend.shared.core import PROCESSED_ROOT, load_runtime_environment, pending_build_path, read_jsonl, stable_hash, write_json
+from backend.module1_rag.indexing.bm25_index import BM25Index
+from backend.module1_rag.indexing.chroma_index import ChromaIndex
+from backend.module1_rag.indexing.metadata_store import MetadataStore
 
 
 def build_indexes() -> dict:

@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from src.memory.conversation_store import ConversationStore
-from src.memory.followup_rewriter import rewrite_followup
-from src.workflows.rag_graph import retrieve
+from backend.module1_rag.chat.memory.conversation_store import ConversationStore
+from backend.module1_rag.chat.memory.followup_rewriter import rewrite_followup
+from backend.module1_rag.chat.workflow import retrieve
 
 
 def test_standalone_question_does_not_inherit_previous_sql():

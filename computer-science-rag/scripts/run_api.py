@@ -6,9 +6,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import uvicorn
 
-from src.core import load_runtime_environment
+from backend.shared.core import load_runtime_environment
 
 
 if __name__ == "__main__":
     load_runtime_environment()
-    uvicorn.run("src.api.main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("backend.api.main:app", host="127.0.0.1", port=8000, reload=True)

@@ -10,9 +10,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from evaluation.benchmark import load_records
-from src.core import ROOT, current_build_path, read_jsonl, write_jsonl
-from src.indexing.bm25_index import BM25Index
-from src.retrieval.query_classifier import classify
+from backend.shared.core import ROOT, current_build_path, read_jsonl, write_jsonl
+from backend.module1_rag.indexing.bm25_index import BM25Index
+from backend.module1_rag.retrieval.query_classifier import classify
 
 
 CURRICULUM_CASES = [
@@ -50,7 +50,7 @@ def _curriculum_records(build: Path) -> list[dict]:
                        and required.issubset(set(item.get("retrieval_text", "").lower().replace("’", "'").split()))), None)
         if source is None:
             # Token punctuation can differ, so use the project's canonical tokenizer.
-            from src.core import tokens
+            from backend.shared.core import tokens
             source = next((item for item in candidates if item.get("document_type") == "TEXTBOOK"
                            and required.issubset(set(tokens(item.get("retrieval_text", ""))))), None)
         if source is None:

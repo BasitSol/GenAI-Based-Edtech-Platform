@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from evaluation.benchmark import load_records
 from evaluation.excel_report import generate_workbook
-from src.core import ROOT
+from backend.shared.core import ROOT
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import csv
 
-from src.core import current_build_path, read_jsonl
+from backend.shared.core import current_build_path, read_jsonl
 
 
 def evaluate() -> dict:

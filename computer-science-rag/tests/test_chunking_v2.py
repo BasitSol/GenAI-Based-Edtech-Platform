@@ -1,4 +1,4 @@
-from src.chunking.pipeline import _assessment_chunks, _textbook_chunks
+from backend.module1_rag.ingestion.chunking.pipeline import _assessment_chunks, _textbook_chunks
 
 
 DOCUMENT = {"document_id": "paper", "document_type": "QUESTION_PAPER", "level": "A_LEVEL",
