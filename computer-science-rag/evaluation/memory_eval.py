@@ -1,8 +1,8 @@
 """Deterministic memory/rewrite evaluation with honest semantic gaps."""
 from __future__ import annotations
 
-from src.core import tokens
-from src.memory.followup_rewriter import rewrite_followup
+from backend.shared.core import tokens
+from backend.module1_rag.chat.memory.followup_rewriter import rewrite_followup
 
 
 def _recall(expected: str, actual: str) -> float:

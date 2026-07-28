@@ -4,7 +4,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.ingestion.pipeline import build_corpus
+from backend.module1_rag.ingestion.pipeline import build_corpus
 
 
 if __name__ == "__main__":

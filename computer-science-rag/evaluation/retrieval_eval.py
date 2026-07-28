@@ -6,8 +6,8 @@ import time
 from pathlib import Path
 
 from evaluation.benchmark import benchmark_status, measurable_records
-from src.retrieval.hybrid_retriever import HybridRetriever
-from src.workflows.rag_graph import retrieve
+from backend.module1_rag.retrieval.hybrid_retriever import HybridRetriever
+from backend.module1_rag.chat.workflow import retrieve
 
 
 def _relevant(chunk: dict, source: dict) -> bool:

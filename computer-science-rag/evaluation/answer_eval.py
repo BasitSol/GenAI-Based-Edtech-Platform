@@ -6,7 +6,7 @@ from pathlib import Path
 
 from evaluation.benchmark import benchmark_status, measurable_records
 from evaluation.citation_eval import evaluate_answer as evaluate_citations
-from src.generation.answer_generator import answer_question
+from backend.module1_rag.chat.answer_service import answer_question
 
 
 def _mean(rows: list[dict], field: str) -> float | None:

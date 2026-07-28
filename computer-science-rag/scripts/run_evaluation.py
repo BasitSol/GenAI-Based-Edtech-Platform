@@ -17,10 +17,10 @@ from evaluation.ingestion_eval import evaluate as evaluate_ingestion
 from evaluation.memory_eval import evaluate as evaluate_memory
 from evaluation.performance_eval import evaluate as evaluate_performance
 from evaluation.quality_gates import assess
-from evaluation.ragas_eval import evaluate_ragas
+from ragas_evaluation.evaluator import evaluate_ragas
 from evaluation.retrieval_eval import evaluate as evaluate_retrieval
-from src.core import ROOT, current_build_path, load_runtime_environment, write_json
-from src.generation.prompts import PROMPT_LIBRARY_VERSION
+from backend.shared.core import ROOT, current_build_path, load_runtime_environment, write_json
+from backend.shared.prompts import PROMPT_LIBRARY_VERSION
 
 
 def main() -> None:

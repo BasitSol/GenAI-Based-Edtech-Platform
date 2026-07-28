@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import csv
 
-from src.core import ROOT
+from backend.shared.core import ROOT
 
 
 def _gate(value, operator: str, target: float, *, measured: bool = True, reason: str | None = None) -> dict:

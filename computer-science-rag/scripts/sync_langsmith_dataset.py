@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from evaluation.benchmark import approved_records
-from src.core import ROOT
+from backend.shared.core import ROOT
 
 
 if __name__ == "__main__":

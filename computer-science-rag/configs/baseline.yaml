@@ -27,5 +27,5 @@ reranker_candidates: 24
 reranker_max_length: 512
 extractive_context_compression: true
 backend: fastapi
-frontend: streamlit
+frontend: react
 workflow: langgraph_bounded

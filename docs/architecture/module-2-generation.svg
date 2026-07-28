@@ -1,0 +1,212 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1140" viewBox="0 0 1600 1140" role="img" aria-labelledby="title description">
+  <title id="title">Module 2 assessment generation and grading architecture</title>
+  <desc id="description">Teacher assessment generation and validation, approval and export, student submission, AI grading draft, teacher review, and durable SQLite persistence.</desc>
+  <defs>
+    <linearGradient id="header" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b1d68"/>
+      <stop offset="1" stop-color="#7047a3"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-15%" width="120%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#291541" flood-opacity=".13"/>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#66517e"/>
+    </marker>
+    <marker id="retryArrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#b7791f"/>
+    </marker>
+    <style>
+      .title{font:700 31px Inter,Segoe UI,Arial,sans-serif;fill:#fff}
+      .subtitle{font:400 15px Inter,Segoe UI,Arial,sans-serif;fill:#eee5fa}
+      .lane-title{font:700 18px Inter,Segoe UI,Arial,sans-serif;letter-spacing:.8px;fill:#382151}
+      .node-title{font:700 15px Inter,Segoe UI,Arial,sans-serif;fill:#342049}
+      .node-text{font:400 12.5px Inter,Segoe UI,Arial,sans-serif;fill:#62546f}
+      .note{font:600 12px Inter,Segoe UI,Arial,sans-serif;fill:#725019}
+      .edge{fill:none;stroke:#66517e;stroke-width:2.3;marker-end:url(#arrow)}
+      .edge-soft{fill:none;stroke:#927fa7;stroke-width:1.8;stroke-dasharray:6 5;marker-end:url(#arrow)}
+      .edge-retry{fill:none;stroke:#b7791f;stroke-width:2.2;stroke-dasharray:7 5;marker-end:url(#retryArrow)}
+      .node{fill:#fff;stroke:#b4a5c4;stroke-width:1.5;rx:11;filter:url(#shadow)}
+      .node-purple{fill:#f5effc;stroke:#a88ac8;stroke-width:1.5;rx:11;filter:url(#shadow)}
+      .node-blue{fill:#edf6ff;stroke:#79a8cf;stroke-width:1.5;rx:11;filter:url(#shadow)}
+      .node-green{fill:#eef9f1;stroke:#77b68b;stroke-width:1.5;rx:11;filter:url(#shadow)}
+      .node-gold{fill:#fff8e8;stroke:#d3a855;stroke-width:1.5;rx:11;filter:url(#shadow)}
+      .store{fill:#f0f0ff;stroke:#8b89c7;stroke-width:1.5;rx:11;filter:url(#shadow)}
+    </style>
+  </defs>
+
+  <rect width="1600" height="1140" fill="#f7f5fa"/>
+  <rect x="24" y="22" width="1552" height="82" rx="16" fill="url(#header)"/>
+  <text x="55" y="59" class="title">Module 2 — Assessment Generation, Publishing, and Grading</text>
+  <text x="56" y="84" class="subtitle">Syllabus-scoped evidence • deterministic contracts • teacher approval • professional exports • human-reviewed grading</text>
+
+  <!-- Entry and scope -->
+  <rect x="24" y="126" width="1552" height="178" rx="16" fill="#f3edfa" stroke="#d2c2e1"/>
+  <text x="52" y="159" class="lane-title">A. AUTHENTICATED REQUEST AND CURRICULUM SCOPE</text>
+
+  <rect x="58" y="190" width="206" height="78" class="node"/>
+  <text x="161" y="217" text-anchor="middle" class="node-title">React teacher workspace</text>
+  <text x="161" y="240" text-anchor="middle" class="node-text">Quiz / assignment / mock test</text>
+  <text x="161" y="259" text-anchor="middle" class="node-text">level • chapters • topics • difficulty</text>
+
+  <rect x="318" y="190" width="214" height="78" class="node-purple"/>
+  <text x="425" y="217" text-anchor="middle" class="node-title">FastAPI + JWT / RBAC</text>
+  <text x="425" y="240" text-anchor="middle" class="node-text">Teacher-only generation routes</text>
+  <text x="425" y="259" text-anchor="middle" class="node-text">Pydantic request contracts</text>
+
+  <rect x="586" y="178" width="242" height="102" class="node-purple"/>
+  <text x="707" y="206" text-anchor="middle" class="node-title">Catalog resolution</text>
+  <text x="707" y="229" text-anchor="middle" class="node-text">Syllabus chapter/topic IDs</text>
+  <text x="707" y="248" text-anchor="middle" class="node-text">Coursebook page ranges</text>
+  <text x="707" y="267" text-anchor="middle" class="node-text">Coding capability + evidence IDs</text>
+
+  <rect x="882" y="178" width="250" height="102" class="node-blue"/>
+  <text x="1007" y="206" text-anchor="middle" class="node-title">Module 1 retrieval boundary</text>
+  <text x="1007" y="229" text-anchor="middle" class="node-text">HybridRetriever + active build</text>
+  <text x="1007" y="248" text-anchor="middle" class="node-text">Topic-scoped textbook evidence</text>
+  <text x="1007" y="267" text-anchor="middle" class="node-text">Sanitized global paper-style patterns</text>
+
+  <rect x="1186" y="178" width="336" height="102" class="node-gold"/>
+  <text x="1354" y="206" text-anchor="middle" class="node-title">Explicit source-role policy</text>
+  <text x="1354" y="229" text-anchor="middle" class="node-text">Textbook = factual authority</text>
+  <text x="1354" y="248" text-anchor="middle" class="node-text">Past paper = style only</text>
+  <text x="1354" y="267" text-anchor="middle" class="node-text">Schemes/reports = marking patterns</text>
+
+  <path d="M264 229H312" class="edge"/>
+  <path d="M532 229H580" class="edge"/>
+  <path d="M828 229H876" class="edge"/>
+  <path d="M1132 229H1180" class="edge"/>
+
+  <!-- Generation graph -->
+  <rect x="24" y="326" width="1552" height="426" rx="16" fill="#eef5ff" stroke="#bdd2e7"/>
+  <text x="52" y="360" class="lane-title">B. BOUNDED ASSESSMENT LANGGRAPH</text>
+
+  <rect x="56" y="397" width="172" height="82" class="node-purple"/>
+  <text x="142" y="425" text-anchor="middle" class="node-title">Plan</text>
+  <text x="142" y="448" text-anchor="middle" class="node-text">Deterministic blueprint</text>
+  <text x="142" y="467" text-anchor="middle" class="node-text">marks • types • topic slots</text>
+
+  <rect x="272" y="397" width="190" height="82" class="node-blue"/>
+  <text x="367" y="425" text-anchor="middle" class="node-title">Retrieve evidence</text>
+  <text x="367" y="448" text-anchor="middle" class="node-text">Per-topic textbook lanes</text>
+  <text x="367" y="467" text-anchor="middle" class="node-text">Style + marking patterns</text>
+
+  <rect x="506" y="385" width="214" height="106" class="node-purple"/>
+  <text x="613" y="413" text-anchor="middle" class="node-title">Generate strict JSON</text>
+  <text x="613" y="436" text-anchor="middle" class="node-text">Fixed source assignments</text>
+  <text x="613" y="455" text-anchor="middle" class="node-text">Fixed question structure</text>
+  <text x="613" y="474" text-anchor="middle" class="node-text">Bounded provider retry</text>
+
+  <rect x="764" y="385" width="214" height="106" class="node-gold"/>
+  <text x="871" y="413" text-anchor="middle" class="node-title">Source distribution</text>
+  <text x="871" y="436" text-anchor="middle" class="node-text">Factual/style role integrity</text>
+  <text x="871" y="455" text-anchor="middle" class="node-text">Balanced provenance</text>
+  <text x="871" y="474" text-anchor="middle" class="node-text">Canonical citations</text>
+
+  <rect x="1022" y="385" width="214" height="106" class="node-gold"/>
+  <text x="1129" y="413" text-anchor="middle" class="node-title">Marking quality</text>
+  <text x="1129" y="436" text-anchor="middle" class="node-text">One rubric point per mark</text>
+  <text x="1129" y="455" text-anchor="middle" class="node-text">Answer/marks alignment</text>
+  <text x="1129" y="474" text-anchor="middle" class="node-text">Coding rubric contract</text>
+
+  <rect x="1280" y="385" width="242" height="106" class="node-gold"/>
+  <text x="1401" y="413" text-anchor="middle" class="node-title">Mock-test scope</text>
+  <text x="1401" y="436" text-anchor="middle" class="node-text">8 questions • exactly 25 marks</text>
+  <text x="1401" y="455" text-anchor="middle" class="node-text">Selected-topic coverage</text>
+  <text x="1401" y="474" text-anchor="middle" class="node-text">Coding/theory boundary</text>
+
+  <path d="M228 438H266" class="edge"/>
+  <path d="M462 438H500" class="edge"/>
+  <path d="M720 438H758" class="edge"/>
+  <path d="M978 438H1016" class="edge"/>
+  <path d="M1236 438H1274" class="edge"/>
+
+  <rect x="561" y="558" width="478" height="96" class="node-green"/>
+  <text x="800" y="586" text-anchor="middle" class="node-title">Final validation gate</text>
+  <text x="800" y="609" text-anchor="middle" class="node-text">Question count • marks • citations • source entailment • model-answer correctness</text>
+  <text x="800" y="630" text-anchor="middle" class="node-text">Difficulty alignment • topic scope • no unsupported technical claims</text>
+
+  <rect x="1182" y="570" width="276" height="72" class="node-gold"/>
+  <text x="1320" y="597" text-anchor="middle" class="node-title">Bounded regeneration</text>
+  <text x="1320" y="620" text-anchor="middle" class="node-text">Retry only within configured limit</text>
+
+  <rect x="142" y="570" width="276" height="72" class="node-green"/>
+  <text x="280" y="597" text-anchor="middle" class="node-title">Validated draft result</text>
+  <text x="280" y="620" text-anchor="middle" class="node-text">Trace ID + telemetry + provenance</text>
+
+  <path d="M1401 491V526H800V552" class="edge"/>
+  <path d="M1039 606H1176" class="edge-retry"/>
+  <path d="M1320 570V526H613V497" class="edge-retry"/>
+  <text x="1064" y="596" class="note">failed + retryable</text>
+  <path d="M561 606H424" class="edge"/>
+  <text x="455" y="596" class="node-text">passed</text>
+
+  <rect x="494" y="681" width="612" height="43" class="store"/>
+  <text x="800" y="708" text-anchor="middle" class="node-title">Only a fully validated result may be persisted; rejected generations create no assessment draft</text>
+  <path d="M280 642V702H488" class="edge"/>
+
+  <!-- Lifecycle -->
+  <rect x="24" y="774" width="1552" height="172" rx="16" fill="#eef9f1" stroke="#bbdbc4"/>
+  <text x="52" y="808" class="lane-title">C. TEACHER REVIEW, EXPORT, AND PUBLICATION</text>
+
+  <rect x="70" y="841" width="226" height="72" class="store"/>
+  <text x="183" y="868" text-anchor="middle" class="node-title">SQLite pending_review</text>
+  <text x="183" y="891" text-anchor="middle" class="node-text">Content + citations + rubric</text>
+
+  <rect x="364" y="841" width="226" height="72" class="node-green"/>
+  <text x="477" y="868" text-anchor="middle" class="node-title">Owning teacher review</text>
+  <text x="477" y="891" text-anchor="middle" class="node-text">Inspect • approve • safe delete</text>
+
+  <rect x="658" y="829" width="274" height="96" class="node-blue"/>
+  <text x="795" y="857" text-anchor="middle" class="node-title">Professional exports</text>
+  <text x="795" y="880" text-anchor="middle" class="node-text">ReportLab PDF</text>
+  <text x="795" y="899" text-anchor="middle" class="node-text">Editable python-docx DOCX</text>
+
+  <rect x="1000" y="841" width="226" height="72" class="node-green"/>
+  <text x="1113" y="868" text-anchor="middle" class="node-title">Approved assessment</text>
+  <text x="1113" y="891" text-anchor="middle" class="node-text">Published by teacher action</text>
+
+  <rect x="1294" y="841" width="226" height="72" class="node"/>
+  <text x="1407" y="868" text-anchor="middle" class="node-title">Student workspace</text>
+  <text x="1407" y="891" text-anchor="middle" class="node-text">View + submit typed answers</text>
+
+  <path d="M296 877H358" class="edge"/>
+  <path d="M590 877H652" class="edge-soft"/>
+  <path d="M590 877H994" class="edge"/>
+  <path d="M1226 877H1288" class="edge"/>
+
+  <!-- Grading -->
+  <rect x="24" y="968" width="1552" height="148" rx="16" fill="#fff7e8" stroke="#e1c27c"/>
+  <text x="52" y="1002" class="lane-title">D. TYPED-SUBMISSION GRADING AND HUMAN AUTHORITY</text>
+
+  <rect x="68" y="1027" width="190" height="62" class="node"/>
+  <text x="163" y="1052" text-anchor="middle" class="node-title">Typed submission</text>
+  <text x="163" y="1073" text-anchor="middle" class="node-text">Persist before grading</text>
+
+  <rect x="306" y="1027" width="190" height="62" class="node-purple"/>
+  <text x="401" y="1052" text-anchor="middle" class="node-title">Extract + align</text>
+  <text x="401" y="1073" text-anchor="middle" class="node-text">Question → rubric/model answer</text>
+
+  <rect x="544" y="1027" width="190" height="62" class="node-blue"/>
+  <text x="639" y="1052" text-anchor="middle" class="node-title">Retrieve evidence</text>
+  <text x="639" y="1073" text-anchor="middle" class="node-text">Module 1 supplementary context</text>
+
+  <rect x="782" y="1015" width="210" height="86" class="node-purple"/>
+  <text x="887" y="1042" text-anchor="middle" class="node-title">AI grading draft</text>
+  <text x="887" y="1064" text-anchor="middle" class="node-text">Strict JSON • score bounds</text>
+  <text x="887" y="1083" text-anchor="middle" class="node-text">Strengths • gaps • confidence</text>
+
+  <rect x="1040" y="1027" width="210" height="62" class="store"/>
+  <text x="1145" y="1052" text-anchor="middle" class="node-title">Pending teacher review</text>
+  <text x="1145" y="1073" text-anchor="middle" class="node-text">AI score retained separately</text>
+
+  <rect x="1298" y="1015" width="234" height="86" class="node-green"/>
+  <text x="1415" y="1042" text-anchor="middle" class="node-title">Final human score</text>
+  <text x="1415" y="1064" text-anchor="middle" class="node-text">Teacher-owned decision</text>
+  <text x="1415" y="1083" text-anchor="middle" class="node-text">Auditable AI/human comparison</text>
+
+  <path d="M258 1058H300" class="edge"/>
+  <path d="M496 1058H538" class="edge"/>
+  <path d="M734 1058H776" class="edge"/>
+  <path d="M992 1058H1034" class="edge"/>
+  <path d="M1250 1058H1292" class="edge"/>
+</svg>

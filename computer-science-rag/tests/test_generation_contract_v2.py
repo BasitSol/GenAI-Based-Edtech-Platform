@@ -1,7 +1,7 @@
 import pytest
 
-from src.generation.answer_generator import _canonical_citations, _parse_generation
-from src.generation.verification import verify_response
+from backend.module1_rag.chat.answer_service import _canonical_citations, _parse_generation
+from backend.module1_rag.chat.verification import verify_response
 
 
 CHUNK = {"document_id": "book", "page_start": 42, "chunk_id": "book_42_1", "document_type": "TEXTBOOK", "text": "Binary search needs sorted data."}

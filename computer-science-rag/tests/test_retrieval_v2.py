@@ -1,7 +1,8 @@
-from src.retrieval.context_builder import extract_relevant_text
-from src.retrieval.hybrid_retriever import _rrf
-from src.retrieval.query_classifier import classify
-from src.retrieval.reranker import rerank_with_debug
+from backend.module1_rag.retrieval.context_builder import extract_relevant_text
+from backend.module1_rag.indexing.chroma_index import ChromaIndex
+from backend.module1_rag.retrieval.hybrid_retriever import _rrf
+from backend.module1_rag.retrieval.query_classifier import classify
+from backend.module1_rag.retrieval.reranker import rerank_with_debug
 
 
 def test_structural_classification_for_problematic_queries(monkeypatch):
@@ -15,6 +16,25 @@ def test_rrf_rewards_items_found_by_both_retrievers():
     scores = _rrf([[{"chunk_id": "both"}, {"chunk_id": "sparse"}],
                    [{"chunk_id": "both"}, {"chunk_id": "dense"}]])
     assert scores["both"] > scores["sparse"] and scores["both"] > scores["dense"]
+
+
+def test_chroma_search_combines_level_and_document_type_with_and_filter():
+    """Chroma rejects multiple top-level metadata fields; use one $and clause."""
+    seen = {}
+
+    class Embedder:
+        def embed_many(self, _): return [[0.1, 0.2]]
+
+    class Collection:
+        def query(self, **kwargs):
+            seen.update(kwargs)
+            return {"ids": [["chunk"]], "distances": [[0.1]]}
+
+    index = object.__new__(ChromaIndex)
+    index.embedder, index.collection = Embedder(), Collection()
+    hits = index.search("binary search", 4, {"level": "O_LEVEL", "document_type": "QUESTION_PAPER"})
+    assert seen["where"] == {"$and": [{"level": "O_LEVEL"}, {"document_type": "QUESTION_PAPER"}]}
+    assert hits[0]["chunk_id"] == "chunk"
 
 
 class FakeCrossEncoder:

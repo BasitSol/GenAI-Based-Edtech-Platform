@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1080" viewBox="0 0 1600 1080" role="img" aria-labelledby="title description">
+  <title id="title">Module 1 educational RAG architecture</title>
+  <desc id="description">Offline immutable corpus construction and online bounded LangGraph retrieval, grounded answer generation, verification, memory, and telemetry.</desc>
+  <defs>
+    <linearGradient id="header" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#12355b"/>
+      <stop offset="1" stop-color="#2563a6"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-15%" width="120%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#16324f" flood-opacity=".13"/>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#47647f"/>
+    </marker>
+    <marker id="retryArrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#b7791f"/>
+    </marker>
+    <style>
+      .title{font:700 31px Inter,Segoe UI,Arial,sans-serif;fill:#fff}
+      .subtitle{font:400 15px Inter,Segoe UI,Arial,sans-serif;fill:#dcecff}
+      .lane-title{font:700 18px Inter,Segoe UI,Arial,sans-serif;letter-spacing:.8px;fill:#17324d}
+      .node-title{font:700 15px Inter,Segoe UI,Arial,sans-serif;fill:#17324d}
+      .node-text{font:400 12.5px Inter,Segoe UI,Arial,sans-serif;fill:#496176}
+      .note{font:600 12px Inter,Segoe UI,Arial,sans-serif;fill:#725019}
+      .edge{fill:none;stroke:#47647f;stroke-width:2.3;marker-end:url(#arrow)}
+      .edge-soft{fill:none;stroke:#7b93a8;stroke-width:1.8;stroke-dasharray:6 5;marker-end:url(#arrow)}
+      .edge-retry{fill:none;stroke:#b7791f;stroke-width:2.2;stroke-dasharray:7 5;marker-end:url(#retryArrow)}
+      .node{fill:#fff;stroke:#9bb3c8;stroke-width:1.5;rx:11;filter:url(#shadow)}
+      .node-blue{fill:#eff7ff;stroke:#78a9d4;stroke-width:1.5;rx:11;filter:url(#shadow)}
+      .node-green{fill:#edf9f1;stroke:#77b68b;stroke-width:1.5;rx:11;filter:url(#shadow)}
+      .node-gold{fill:#fff8e8;stroke:#d3a855;stroke-width:1.5;rx:11;filter:url(#shadow)}
+      .store{fill:#f4f0ff;stroke:#9b86c8;stroke-width:1.5;rx:11;filter:url(#shadow)}
+    </style>
+  </defs>
+
+  <rect width="1600" height="1080" fill="#f4f7fb"/>
+  <rect x="24" y="22" width="1552" height="82" rx="16" fill="url(#header)"/>
+  <text x="55" y="59" class="title">Module 1 — Educational Retrieval-Augmented Generation</text>
+  <text x="56" y="84" class="subtitle">Immutable knowledge builds • hybrid evidence retrieval • bounded correction • grounded answers • canonical citations</text>
+
+  <!-- Offline lane -->
+  <rect x="24" y="126" width="1552" height="286" rx="16" fill="#eaf4fe" stroke="#b7d3eb"/>
+  <text x="52" y="159" class="lane-title">A. OFFLINE KNOWLEDGE BUILD</text>
+
+  <rect x="54" y="188" width="176" height="92" class="node"/>
+  <text x="142" y="216" text-anchor="middle" class="node-title">Private PDF corpus</text>
+  <text x="142" y="239" text-anchor="middle" class="node-text">Textbooks • syllabus</text>
+  <text x="142" y="258" text-anchor="middle" class="node-text">papers • schemes • reports</text>
+
+  <rect x="274" y="188" width="190" height="92" class="node-blue"/>
+  <text x="369" y="216" text-anchor="middle" class="node-title">Fingerprint + classify</text>
+  <text x="369" y="239" text-anchor="middle" class="node-text">Source inventory • checksum</text>
+  <text x="369" y="258" text-anchor="middle" class="node-text">level • subject • paper identity</text>
+
+  <rect x="508" y="188" width="194" height="92" class="node-blue"/>
+  <text x="605" y="216" text-anchor="middle" class="node-title">Extract + quality check</text>
+  <text x="605" y="239" text-anchor="middle" class="node-text">PyMuPDF • pdfplumber</text>
+  <text x="605" y="258" text-anchor="middle" class="node-text">selective Paddle/Tesseract OCR</text>
+
+  <rect x="746" y="188" width="198" height="92" class="node-blue"/>
+  <text x="845" y="216" text-anchor="middle" class="node-title">Educational chunking</text>
+  <text x="845" y="239" text-anchor="middle" class="node-text">Page-local parent/child</text>
+  <text x="845" y="258" text-anchor="middle" class="node-text">question + scheme identities</text>
+
+  <rect x="988" y="188" width="204" height="92" class="store"/>
+  <text x="1090" y="216" text-anchor="middle" class="node-title">Staged immutable build</text>
+  <text x="1090" y="239" text-anchor="middle" class="node-text">Pages • chunks • manifests</text>
+  <text x="1090" y="258" text-anchor="middle" class="node-text">OCR diagnostics • page figures</text>
+
+  <rect x="1236" y="176" width="286" height="116" class="store"/>
+  <text x="1379" y="204" text-anchor="middle" class="node-title">Validated indexes</text>
+  <text x="1379" y="228" text-anchor="middle" class="node-text">BM25 sparse index</text>
+  <text x="1379" y="247" text-anchor="middle" class="node-text">Chroma cosine vectors</text>
+  <text x="1379" y="266" text-anchor="middle" class="node-text">Metadata SQLite + READY manifest</text>
+
+  <path d="M230 234H268" class="edge"/>
+  <path d="M464 234H502" class="edge"/>
+  <path d="M702 234H740" class="edge"/>
+  <path d="M944 234H982" class="edge"/>
+  <path d="M1192 234H1230" class="edge"/>
+
+  <rect x="482" y="321" width="634" height="60" class="node-green"/>
+  <text x="799" y="346" text-anchor="middle" class="node-title">Atomic promotion boundary</text>
+  <text x="799" y="366" text-anchor="middle" class="node-text">current.json changes only after BM25, Chroma, metadata, identity, and READY manifest succeed</text>
+  <path d="M1379 292V309H1116V321" class="edge"/>
+
+  <!-- Runtime lane -->
+  <rect x="24" y="434" width="1552" height="454" rx="16" fill="#edf8f1" stroke="#b9d9c2"/>
+  <text x="52" y="468" class="lane-title">B. ONLINE LANGGRAPH QUERY WORKFLOW</text>
+
+  <rect x="54" y="500" width="172" height="86" class="node"/>
+  <text x="140" y="528" text-anchor="middle" class="node-title">React / API request</text>
+  <text x="140" y="551" text-anchor="middle" class="node-text">/ask • /chat • /retrieve</text>
+  <text x="140" y="570" text-anchor="middle" class="node-text">level • year • difficulty</text>
+
+  <rect x="270" y="500" width="178" height="86" class="node-green"/>
+  <text x="359" y="528" text-anchor="middle" class="node-title">Understand</text>
+  <text x="359" y="551" text-anchor="middle" class="node-text">Session + follow-up rewrite</text>
+  <text x="359" y="570" text-anchor="middle" class="node-text">intent • category • metadata</text>
+
+  <rect x="492" y="488" width="250" height="110" class="node-green"/>
+  <text x="617" y="516" text-anchor="middle" class="node-title">Hybrid retrieve</text>
+  <text x="617" y="539" text-anchor="middle" class="node-text">Exact metadata lane</text>
+  <text x="617" y="558" text-anchor="middle" class="node-text">BM25 + Chroma multi-query lanes</text>
+  <text x="617" y="577" text-anchor="middle" class="node-text">Reciprocal-rank fusion</text>
+
+  <rect x="786" y="500" width="174" height="86" class="node-green"/>
+  <text x="873" y="528" text-anchor="middle" class="node-title">Rerank</text>
+  <text x="873" y="551" text-anchor="middle" class="node-text">Preserve exact hits</text>
+  <text x="873" y="570" text-anchor="middle" class="node-text">BGE / lexical fallback</text>
+
+  <rect x="1004" y="500" width="176" height="86" class="node-gold"/>
+  <text x="1092" y="528" text-anchor="middle" class="node-title">Evidence check</text>
+  <text x="1092" y="551" text-anchor="middle" class="node-text">Exact scheme or lexical</text>
+  <text x="1092" y="570" text-anchor="middle" class="node-text">curriculum coverage ≥ gate</text>
+
+  <rect x="1224" y="488" width="298" height="110" class="node-green"/>
+  <text x="1373" y="516" text-anchor="middle" class="node-title">Assemble grounded context</text>
+  <text x="1373" y="539" text-anchor="middle" class="node-text">Parent expansion • bounded chunks</text>
+  <text x="1373" y="558" text-anchor="middle" class="node-text">Extractive compression</text>
+  <text x="1373" y="577" text-anchor="middle" class="node-text">Source authority + context budget</text>
+
+  <path d="M226 543H264" class="edge"/>
+  <path d="M448 543H486" class="edge"/>
+  <path d="M742 543H780" class="edge"/>
+  <path d="M960 543H998" class="edge"/>
+  <path d="M1180 543H1218" class="edge"/>
+
+  <rect x="805" y="632" width="248" height="72" class="node-gold"/>
+  <text x="929" y="658" text-anchor="middle" class="node-title">Corrective query</text>
+  <text x="929" y="681" text-anchor="middle" class="node-text">One bounded vocabulary rewrite</text>
+  <path d="M1092 586V614H1053V632" class="edge-retry"/>
+  <path d="M805 668H617V604" class="edge-retry"/>
+  <text x="1071" y="611" class="note">insufficient</text>
+
+  <rect x="172" y="738" width="316" height="96" class="node-blue"/>
+  <text x="330" y="766" text-anchor="middle" class="node-title">Exact official answer branch</text>
+  <text x="330" y="790" text-anchor="middle" class="node-text">Matching mark-scheme entries returned</text>
+  <text x="330" y="810" text-anchor="middle" class="node-text">without generative paraphrasing</text>
+
+  <rect x="642" y="726" width="316" height="120" class="node-blue"/>
+  <text x="800" y="754" text-anchor="middle" class="node-title">Grounded generation branch</text>
+  <text x="800" y="778" text-anchor="middle" class="node-text">Prompt-local source catalog</text>
+  <text x="800" y="798" text-anchor="middle" class="node-text">OpenAI strict JSON answer contract</text>
+  <text x="800" y="818" text-anchor="middle" class="node-text">Optional visual attachment (known limitation)</text>
+
+  <rect x="1112" y="738" width="316" height="96" class="node-green"/>
+  <text x="1270" y="766" text-anchor="middle" class="node-title">Verify + canonicalize</text>
+  <text x="1270" y="790" text-anchor="middle" class="node-text">Grounding • citation contract • failure state</text>
+  <text x="1270" y="810" text-anchor="middle" class="node-text">Resolve source keys to document/chunk/page</text>
+
+  <path d="M1373 598V690H330V732" class="edge-soft"/>
+  <path d="M1373 598V690H800V720" class="edge"/>
+  <path d="M488 786H1106" class="edge-soft"/>
+  <path d="M958 786H1106" class="edge"/>
+
+  <!-- Cross cutting -->
+  <rect x="24" y="910" width="1552" height="142" rx="16" fill="#fff7e8" stroke="#e1c27c"/>
+  <text x="52" y="944" class="lane-title">C. STATE, OBSERVABILITY, AND RESPONSE</text>
+
+  <rect x="76" y="969" width="270" height="55" class="store"/>
+  <text x="211" y="993" text-anchor="middle" class="node-title">Conversation SQLite</text>
+  <text x="211" y="1012" text-anchor="middle" class="node-text">Session state + selected filters</text>
+
+  <rect x="430" y="969" width="270" height="55" class="store"/>
+  <text x="565" y="993" text-anchor="middle" class="node-title">Telemetry + LangSmith</text>
+  <text x="565" y="1012" text-anchor="middle" class="node-text">Trace, latency, cost, retrieval IDs</text>
+
+  <rect x="784" y="969" width="270" height="55" class="store"/>
+  <text x="919" y="993" text-anchor="middle" class="node-title">Live evaluation workbook</text>
+  <text x="919" y="1012" text-anchor="middle" class="node-text">Append-only answer observations</text>
+
+  <rect x="1138" y="961" width="360" height="71" class="node-green"/>
+  <text x="1318" y="989" text-anchor="middle" class="node-title">API response</text>
+  <text x="1318" y="1012" text-anchor="middle" class="node-text">Answer • citations • status • diagnostics • trace ID</text>
+
+  <path d="M1270 834V888H1318V955" class="edge"/>
+  <path d="M1270 834V900H565V963" class="edge-soft"/>
+  <path d="M1270 834V900H919V963" class="edge-soft"/>
+  <path d="M359 586V900H211V963" class="edge-soft"/>
+</svg>

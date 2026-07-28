@@ -1,13 +1,13 @@
 import importlib
 import os
 
-from src.indexing.embedding_service import EmbeddingUsage, OpenAIEmbeddingService, create_embedding_service
+from backend.module1_rag.indexing.embedding_service import EmbeddingUsage, OpenAIEmbeddingService, create_embedding_service
 
 
 def test_importing_core_does_not_load_dotenv(monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    import src.core
-    importlib.reload(src.core)
+    import backend.shared.core
+    importlib.reload(backend.shared.core)
     assert "OPENAI_API_KEY" not in os.environ
 
 

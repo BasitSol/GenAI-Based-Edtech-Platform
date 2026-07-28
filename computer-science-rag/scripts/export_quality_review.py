@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.core import ROOT, current_build_path, read_jsonl
+from backend.shared.core import ROOT, current_build_path, read_jsonl
 
 
 def _write(path: Path, rows: list[dict], fields: list[str]) -> None:
